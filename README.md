@@ -4,9 +4,13 @@
   <img src="./media/logo.jpg" alt="LibSkills logo" width="120">
 </p>
 
-**Knowledge Package Manager for Open-Source Libraries.**
+**Behavioral Knowledge Layer for Open-Source Libraries.**
 
 Reduce AI hallucinations. Eliminate token waste. Ship best practices out of the box.
+
+LibSkills is a **protocol** — a standard way to package operational knowledge about libraries so that AI agents, IDEs, CI systems, and humans can understand how to use them *safely*.
+
+It answers one question: *"What must an AI agent know to use this library safely?"*
 
 ---
 
@@ -14,15 +18,17 @@ Reduce AI hallucinations. Eliminate token waste. Ship best practices out of the 
 
 | Repository | Description |
 |------------|-------------|
-| [libskills-cli](https://github.com/LibSkills/libskills-cli) | Rust CLI — search, get, update, doctor, and manage skills |
-| [libskills-registry](https://github.com/LibSkills/libskills-registry) | Official skill registry — Tier 1 & Tier 2 knowledge files |
 | [libskills-schema](https://github.com/LibSkills/libskills-schema) | JSON Schema definitions for skill files |
-| [libskills-protocol](https://github.com/LibSkills/libskills-protocol) | MCP and HTTP protocol definitions |
-| [libskills-docs](https://github.com/LibSkills/libskills-docs) | Philosophy, specification, and governance docs |
+| [libskills-registry](https://github.com/LibSkills/libskills-registry) | Official skill registry — Tier 1 & Tier 2 knowledge files |
+| [libskills-cli](https://github.com/LibSkills/libskills-cli) | Rust CLI — search, get, info, update, init, doctor |
+| [libskills-protocol](https://github.com/LibSkills/libskills-protocol) | MCP and HTTP protocol definitions (future) |
+| [libskills-docs](https://github.com/LibSkills/libskills-docs) | Philosophy, specification, governance, roadmap |
 
-## Specification
+## Core Loop
 
-The full LibSkills Protocol specification is in [SPEC.md](./SPEC.md).
+```
+Discover → Get → Read → Reduce errors
+```
 
 ## Quickstart
 
