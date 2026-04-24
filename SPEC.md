@@ -391,7 +391,144 @@ POST /v1/skills                           # Submit a skill (Tier 2)
 GET  /health                              # Health check
 ```
 
-## 9. Validation Rules
+## 9. Skill Inheritance (Future)
+
+Skills can inherit knowledge from parent skills to avoid duplication.
+
+### 9.1 Inheritance Model
+
+```
+react-router@6.20
+  inherits: react@18
+```
+
+When AI reads `react-router`, it also loads `react`'s knowledge first, then applies react-router-specific overrides.
+
+### 9.2 Common Inheritance Chains
+
+- `react-router` → `react`
+- `redux-toolkit` → `redux` → `react`
+- `grpc` (with multi-language bindings) → base `grpc` core
+
+### 9.3 Skill Dependency Graph
+
+If library A depends on library B, AI SHOULD load B's skill before A's.
+
+```jsonc
+{
+  "dependencies": {
+    "required": ["fmt"],
+    "skills": ["cpp/fmtlib/fmt"]
+  }
+}
+```
+
+This ensures AI understands the full dependency chain before generating code.
+
+## 10. Skill Types
+
+Every skill should declare its type to help AI choose the right consumption strategy.
+
+| Type | Example | AI Strategy |
+|------|---------|-------------|
+| `library` | spdlog, fmt | Load full API + pitfalls |
+| `framework` | React, FastAPI | Load lifecycle + routing patterns |
+| `sdk` | AWS SDK, Stripe | Load auth + error handling |
+| `runtime` | Node.js, Deno | Load event loop + async patterns |
+| `tooling` | CMake, Docker | Load configuration patterns |
+| `middleware` | Express middleware | Load chain pattern |
+| `database` | PostgreSQL driver | Load connection + query patterns |
+| `network` | Boost.Asio, libcurl | Load async + error handling |
+| `ui` | Dear ImGui, Qt | Load event loop + rendering patterns |
+| `compiler` | Clang plugins | Load plugin lifecycle |
+
+## 11. Skill Generator (Future)
+
+```bash
+libskills generate cpp/gabime/spdlog
+```
+
+Given a README, docs, and tests, automatically generate a skill scaffold.
+
+### Input Sources
+- README
+- Official documentation
+- Test files
+- GitHub issues
+- Benchmarks
+
+### Output
+- `skill.json` (metadata auto-filled)
+- Directory structure with placeholders
+
+## 12. Skill Linting (Future)
+
+```bash
+libskills lint cpp/gabime/spdlog
+```
+
+Checks:
+- Missing required files
+- Incomplete examples
+- Token count outside 500–1500 range
+- Missing tag entries
+- Outdated version field
+
+## 13. Completeness Score
+
+Automatically calculated based on file presence:
+
+| Files Present | Score |
+|--------------|-------|
+| 9 of 9 + examples | 100 |
+| 7-8 of 9 + examples | 80–95 |
+| 5-6 of 9 + examples | 60–75 |
+| < 5 | < 50 |
+
+Included in `skill.json` as `completeness`.
+
+## 14. Compatibility Graph
+
+```jsonc
+{
+  "compatibility": {
+    "c++": ["17", "20", "23"],
+    "compilers": ["clang>=16", "gcc>=11", "msvc>=2022"],
+    "platforms": ["linux-x64", "macos-arm64", "windows-x64"]
+  }
+}
+```
+
+AI uses this to avoid suggesting incompatible compiler flags or platform-specific APIs.
+
+## 15. Benchmark Data (Future)
+
+Optional benchmark section in `performance.md`:
+
+```markdown
+## Benchmarks
+
+| Config | Throughput | Latency p50 | Latency p99 |
+|--------|-----------|-------------|-------------|
+| Sync, single thread | 500k/s | 2µs | 10µs |
+| Async, 4 threads | 2M/s | 0.5µs | 5µs |
+| Flush every log | 10k/s | 100µs | 500µs |
+```
+
+## 16. Community Ratings (Future)
+
+```jsonc
+{
+  "community_rating": {
+    "reliability": 4.5,
+    "hallucination_safety": 4.8,
+    "thoroughness": 4.2
+  },
+  "votes": 128
+}
+```
+
+## 17. Validation Rules
 
 - Each markdown file must be 500–1500 tokens
 - `pitfalls.md` is **required** (not optional)
