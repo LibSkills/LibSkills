@@ -14,6 +14,7 @@ Reduce AI hallucinations. Eliminate token waste. Ship best practices out of the 
 | [libskills-registry](https://github.com/LibSkills/libskills-registry) | Official skill registry — Tier 1 & Tier 2 knowledge files |
 | [libskills-schema](https://github.com/LibSkills/libskills-schema) | JSON Schema definitions for skill files |
 | [libskills-protocol](https://github.com/LibSkills/libskills-protocol) | MCP and HTTP protocol definitions |
+| [libskills-docs](https://github.com/LibSkills/libskills-docs) | Philosophy, specification, and governance docs |
 
 ## Specification
 
