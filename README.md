@@ -1,5 +1,9 @@
 # LibSkills
 
+<p align="center">
+  <img src="./media/logo.jpg" alt="LibSkills logo" width="120">
+</p>
+
 **Knowledge Package Manager for Open-Source Libraries.**
 
 Reduce AI hallucinations. Eliminate token waste. Ship best practices out of the box.
