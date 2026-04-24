@@ -1,297 +1,402 @@
-# LibSkills Skill Format Specification v1
+# LibSkills Specification v1
 
-This document defines the schema and semantics of a LibSkills skill file. Every skill must conform to this specification.
+This document defines the LibSkills Protocol — the standard for packaging, distributing, and consuming library operational knowledge.
 
 ---
 
-## 1. File Format
+## 1. Core Concept
 
-Skills are stored as JSON files with a `.json` extension. The file name should match the library name (e.g., `fmt.json`, `spdlog.json`).
+LibSkills is a **Knowledge Package Manager**. Each "skill" is a collection of structured, chunked knowledge files about a specific open-source library. The goal is to give AI agents everything they need to use a library correctly — without guessing, without reading the full source, and without hallucinating.
 
-## 2. File Location
+## 2. Registry Structure
+
+### 2.1 Repository Layout
 
 ```
-registry/{group}/{language}/{author}/{name}.json
+registry/
+├── index.json                    # Master index of all skills
+├── cpp/
+│   ├── gabime/
+│   │   └── spdlog/
+│   │       ├── skill.json        # Metadata only
+│   │       ├── tier1/            # Official, curated knowledge
+│   │       │   ├── overview.md
+│   │       │   ├── api.md
+│   │       │   ├── pitfalls.md
+│   │       │   ├── threading.md
+│   │       │   ├── lifecycle.md
+│   │       │   ├── memory.md
+│   │       │   ├── safety.md
+│   │       │   ├── performance.md
+│   │       │   └── examples/
+│   │       │       └── basic.cpp
+│   │       └── tier2/            # Community-submitted knowledge
+│   │           ├── community-a/
+│   │           └── community-b/
+│   └── nlohmann/
+│       └── json/
+│           └── ...               # Same structure
+├── rust/
+│   └── tokio-rs/
+│       └── tokio/
+│           └── ...
+├── python/
+│   └── psf/
+│       └── requests/
+│           └── ...
+├── go/
+└── js/
 ```
 
-- `group`: `main` or `contrib`
-- `language`: `cpp`, `rust`, `python`, `go`, `js` (matching the library's primary API language)
-- `author`: GitHub username or organization that maintains the library
-- `name`: the library name
+### 2.2 Naming Convention
 
-**Examples:**
-- `registry/main/cpp/nlohmann/json.json`
-- `registry/main/rust/serde/serde.json`
-- `registry/contrib/python/tiangolo/fastapi.json`
+```
+registry/{language}/{author}/{name}/
+```
 
-## 3. Schema
+- `language`: `cpp`, `rust`, `python`, `go`, `js`
+- `author`: GitHub username or organization
+- `name`: library name
 
-### 3.1 Top-level Structure
+### 2.3 Tier Structure
+
+Each skill has two tiers:
+
+- **tier1/**: Official, reviewed, high-confidence knowledge. Maintained by LibSkills team or trusted maintainers.
+- **tier2/**: Community-submitted knowledge. Open to everyone. May include multiple community variants.
+
+AI agents should prefer `tier1/` over `tier2/` when both exist.
+
+### 2.4 Group Classification
+
+- **Main**: De-facto standard libraries (spdlog, fmt, tokio, serde, requests, numpy, react, express)
+- **Contrib**: Niche, smaller, or newer libraries
+
+## 3. Skill Metadata (`skill.json`)
+
+### 3.1 Schema
 
 ```jsonc
 {
-  "$schema": "https://libskills.dev/schemas/v1/skill.json",
-  "libskills": "1.0",
+  "name": "spdlog",
+  "repo": "gabime/spdlog",
+  "language": "cpp",
+  "tier": "tier1",
+  "group": "main",
+  "version": "1.14.2",
+  "skill_version": "1.0.0",
+  "schema": "libskills/v1",
 
-  "skill": {
-    "name": "<string>",
-    "version": "<semver>",
-    "tier": 1 | 2,
-    "group": "main" | "contrib"
+  "trust_score": 95,
+  "verified": true,
+  "official": true,
+  "updated_at": "2026-04-25T00:00:00Z",
+
+  "trust_score_sources": {
+    "official_review": 40,
+    "stars": 20,
+    "community_votes": 20,
+    "update_freshness": 15,
+    "issue_health": 5
   },
 
-  "library": {
-    "name": "<string>",
-    "language": "<string>",
-    "repo": "<string>",
-    "homepage": "<string>",
-    "license": "<string>",
-    "versions": ["<string>"],
-    "description": "<string>"
-  },
+  "completeness": 85,
 
-  "usage": {
-    "minimal_example": "<code block or description>",
-    "configuration": "<string>",
-    "anti_patterns": ["<string>"]
-  },
+  "tags": [
+    "logging",
+    "async",
+    "thread-safe",
+    "header-only"
+  ],
 
-  "risks": {
-    "crash_prone_patterns": ["<string>"],
-    "leaks": ["<string>"],
-    "thread_unsafe": ["<string>"],
-    "exception_paths": ["<string>"]
-  },
-
-  "performance": {
-    "blocking": true | false,
-    "async_support": true | false,
-    "allocation_pattern": "<string>",
-    "known_limits": ["<string>"]
-  },
-
-  "errors": {
-    "common_issues": [
-      {
-        "title": "<string>",
-        "symptoms": "<string>",
-        "cause": "<string>",
-        "solution": "<string>"
-      }
-    ],
-    "edge_cases": ["<string>"]
-  },
-
-  "safety": {
-    "red_lines": ["<string>"],
-    "deprecated_apis": ["<string>"],
-    "version_breaking_changes": [
-      {
-        "from": "<version>",
-        "to": "<version>",
-        "changes": ["<string>"]
-      }
-    ]
+  "compatibility": {
+    "c++": ["17", "20", "23"],
+    "platforms": ["linux", "macos", "windows"]
   },
 
   "dependencies": {
-    "required": ["<string>"],
-    "optional": ["<string>"],
-    "platform_specific": ["<string>"]
+    "required": ["fmt"],
+    "optional": []
   },
 
-  "maintainers": ["<string>"],
-  "updated": "<ISO 8601 timestamp>"
+  "files": {
+    "tier1": [
+      "overview.md",
+      "api.md",
+      "pitfalls.md",
+      "threading.md",
+      "lifecycle.md",
+      "memory.md",
+      "safety.md",
+      "performance.md",
+      "examples/basic.cpp"
+    ],
+    "tier2": []
+  }
 }
 ```
 
 ### 3.2 Required Fields
 
-Only these fields are **required**:
+| Field | Description |
+|-------|-------------|
+| `name` | Library name |
+| `repo` | GitHub repo (author/name) |
+| `language` | Primary language |
+| `tier` | `tier1` or `tier2` |
+| `group` | `main` or `contrib` |
+| `version` | Library version this skill targets |
+| `skill_version` | Version of this skill file |
+| `schema` | `libskills/v1` |
+| `trust_score` | 0–100 |
+| `updated_at` | ISO 8601 timestamp |
+| `tags` | Array of tags for search |
+| `files` | List of files included |
 
-- `libskills` (version of this spec the skill targets)
-- `skill.name`
-- `skill.version`
-- `skill.tier`
-- `skill.group`
-- `library.name`
-- `library.language`
-- `library.repo`
-- `library.versions`
-- `usage.minimal_example`
-- `safety.red_lines`
-- `updated`
+### 3.3 Trust Score Calculation
 
-All other fields are optional but **strongly encouraged**. The more complete a skill is, the better an AI agent can use it.
+| Component | Max Score | Source |
+|-----------|-----------|--------|
+| Official Review | 40 | Tier 1 maintainer review |
+| Stars | 20 | Based on GitHub stars tier |
+| Community Votes | 20 | User ratings and usage |
+| Update Freshness | 15 | Skill updated within 60 days of library release |
+| Issue Health | 5 | Low open issue count relative to stars |
 
-### 3.3 Field Semantics
+## 4. Knowledge Files
 
-#### `skill.version`
-The version of this *skill file*, not the library version. Follows semver. Increment when:
-- **Major**: Breaking change to the skill format or when the library has a breaking API change
-- **Minor**: Adding new sections, examples, or patterns
-- **Patch**: Fixing typos, adding edge cases, minor corrections
+Each file should be **500–1500 tokens** (not characters). This keeps each chunk small enough for an AI agent to consume efficiently.
 
-#### `tier`
-- `1`: Officially curated by LibSkills maintainers. Every field is verified.
-- `2`: Community-contributed. Verified for format compliance only.
+### 4.1 `overview.md`
 
-#### `group`
-- `main`: The library is a de-facto standard. Example: `fmtlib/fmt` for C++ formatting.
-- `contrib`: Smaller, niche, or alternative libraries.
+Brief description of the library, its purpose, and when to use it.
 
-#### `library.versions`
-An array of supported library version ranges. Use semver range syntax:
-```jsonc
-"versions": ["1.x", "2.0-2.5"]
+### 4.2 `api.md`
+
+Core API usage patterns. Include minimal working code snippets. Focus on the 20% of APIs that cover 80% of use cases.
+
+### 4.3 `pitfalls.md`
+
+**The most important file.** Common mistakes and anti-patterns. What NOT to do. This is where most hallucination errors are prevented.
+
+```markdown
+## Anti-Patterns
+
+### Do NOT use std::endl
+`spdlog` is binary-safe. Using `std::endl` flushes the buffer on every write.
+Always use `\n` or let the logger handle flushing.
+
+### Do NOT pass temporary strings for format args
+```cpp
+// BAD
+spdlog::info("Value: {}", std::to_string(x));  // Heap allocation
+// GOOD
+spdlog::info("Value: {}", x);  // spdlog handles formatting
 ```
 
-#### `usage.minimal_example`
-The shortest possible working code snippet. Should compile/run without additional setup.
+### Do NOT use default logger in static destructors
+The default logger may already be destroyed. See `lifecycle.md`.
+```
 
-#### `usage.anti_patterns`
-Common mistakes developers and AI agents make with this library.
+### 4.4 `threading.md`
 
-#### `safety.red_lines`
-Conditions or patterns that must NEVER be used. If an AI agent encounters these in its generation, it should stop and warn the user.
+Thread safety guarantees, async behavior, and concurrency constraints.
 
-## 4. Index File (`index.json`)
+```markdown
+## Thread Safety
 
-The index file is the entry point for the CLI.
+- Default logger: NOT thread-safe by default
+- `spdlog::async_logger`: thread-safe, uses background thread pool
+- `sinks`: depends on sink type (basic_file_sink is NOT thread-safe)
+
+## Async Mode
+
+spdlog::init_thread_pool(queue_size=8192, threads=1);
+auto logger = spdlog::create_async<spdlog::sinks::basic_file_sink_mt>("async", "logs/app.log");
+```
+
+### 4.5 `lifecycle.md`
+
+Initialization, shutdown, and ordering constraints.
+
+```markdown
+## Initialization
+
+Call `spdlog::set_default_logger()` before any logging in static initializers.
+
+## Shutdown
+
+Always call `spdlog::shutdown()` before process exit to flush all loggers.
+Never call `shutdown()` inside a static destructor — use `atexit()`.
+```
+
+### 4.6 `memory.md`
+
+Resource management, ownership, and leak patterns.
+
+### 4.7 `safety.md`
+
+Red lines — conditions that must NEVER occur. If an AI agent detects these patterns in its output, it should stop and warn.
+
+```markdown
+## Red Lines
+
+- NEVER use logger after fork() without recreating it
+- NEVER destroy logger before flush
+- NEVER share `basic_file_sink` across threads without synchronization
+- NEVER use `%s` format strings — always use {} formatting
+```
+
+### 4.8 `performance.md`
+
+Throughput, latency, blocking behavior, allocation patterns.
+
+```markdown
+## Async Logger Throughput
+
+~2 million logs/sec on modern hardware (single thread)
+~5 million logs/sec with multiple threads
+
+## Blocking
+
+- Synchronous logger: blocks on write
+- Async logger: non-blocking (queue-based), may block if queue is full
+```
+
+### 4.9 `examples/` directory
+
+Minimal working examples. One file per example. Each example should be self-contained and compilable/runnable.
+
+## 5. Registry Index (`index.json`)
+
+### 5.1 Schema
 
 ```jsonc
 {
+  "schema": "libskills/v1",
   "version": 1,
-  "spec_version": "1.0",
-  "updated": "2026-04-25T00:00:00Z",
-  "skills": {
-    "cpp/nlohmann/json": {
+  "updated_at": "2026-04-25T00:00:00Z",
+  "skills": [
+    {
+      "key": "cpp/gabime/spdlog",
+      "name": "spdlog",
+      "language": "cpp",
+      "tier": "tier1",
       "group": "main",
-      "tier": 1,
-      "repo": "nlohmann/json",
-      "description": "JSON for Modern C++",
-      "versions": ["3.x"],
-      "languages": ["cpp"],
-      "path": "registry/main/cpp/nlohmann/json.json",
-      "skill_version": "1.0.0"
+      "version": "1.14.2",
+      "trust_score": 95,
+      "tags": ["logging", "async", "thread-safe"],
+      "summary": "Fast C++ logging library with async support"
     },
-    "cpp/spdlog": {
+    {
+      "key": "cpp/nlohmann/json",
+      "name": "json",
+      "language": "cpp",
+      "tier": "tier1",
       "group": "main",
-      "tier": 1,
-      "repo": "gabime/spdlog",
-      "description": "Fast C++ logging library",
-      "versions": ["1.x"],
-      "languages": ["cpp"],
-      "path": "registry/main/cpp/spdlog/spdlog.json",
-      "skill_version": "1.0.0"
+      "version": "3.11.3",
+      "trust_score": 96,
+      "tags": ["json", "serialization", "header-only"],
+      "summary": "JSON for Modern C++"
     }
-  }
+  ]
 }
 ```
 
-The index is sorted alphabetically by the full key (`language/name`).
+### 5.2 Distribution
 
-## 5. Full Example
+The registry index is distributed as a **snapshot** (`registry.zip`), not a git clone. The CLI downloads and caches this snapshot.
 
-```jsonc
-{
-  "libskills": "1.0",
-  "skill": {
-    "name": "json",
-    "version": "1.0.0",
-    "tier": 1,
-    "group": "main"
-  },
-  "library": {
-    "name": "nlohmann/json",
-    "language": "cpp",
-    "repo": "nlohmann/json",
-    "homepage": "https://json.nlohmann.me",
-    "license": "MIT",
-    "versions": ["3.x"],
-    "description": "JSON for Modern C++ — header-only, intuitive syntax, full JSON support."
-  },
-  "usage": {
-    "minimal_example": "```cpp\n#include <nlohmann/json.hpp>\nusing json = nlohmann::json;\n\nauto j = json::parse(R\"({\"pi\":3.14})\");\ndouble pi = j[\"pi\"];\n```",
-    "configuration": "Header-only. No build config needed. Add `#include <nlohmann/json.hpp>`.",
-    "anti_patterns": [
-      "Using `j[\"key\"]` without checking if the key exists (throws `json::out_of_range`). Prefer `.value(\"key\", default)` or `.contains(\"key\")`.",
-      "Copying large JSON objects. Use `std::move` or reference semantics."
-    ]
-  },
-  "risks": {
-    "crash_prone_patterns": [
-      "Accessing a non-existent key with `operator[]` on a `const` object (compilation error on const, throws on non-const)."
-    ],
-    "leaks": [
-      "No known leak patterns when using standard constructors/destructors."
-    ],
-    "thread_unsafe": [
-      "Individual `json` objects are not thread-safe. Use external synchronization when sharing across threads."
-    ],
-    "exception_paths": [
-      "`json::parse()` throws `json::parse_error` on invalid input. Use the `std::nothrow` overload or catch by reference."
-    ]
-  },
-  "performance": {
-    "blocking": false,
-    "async_support": false,
-    "allocation_pattern": "Dynamic allocation per object/array. May cause fragmentation on large documents.",
-    "known_limits": [
-      "Very deep nesting (> 1024 levels) may cause stack overflow during recursive operations.",
-      "Parsing untrusted input with the default parser may be slow on pathological inputs. Consider SAX parser for streaming."
-    ]
-  },
-  "errors": {
-    "common_issues": [
-      {
-        "title": "Missing key access throws exception",
-        "symptoms": "Unhandled `json::out_of_range` at runtime",
-        "cause": "Using `operator[]` on a key that doesn't exist",
-        "solution": "Use `.value(\"key\", default_value)` or check `.contains(\"key\")` first"
-      },
-      {
-        "title": "Parsing failure on malformed JSON",
-        "symptoms": "`json::parse_error` exception",
-        "cause": "Invalid JSON input",
-        "solution": "Validate input first, or use `json::parse(json_string, nullptr, false)` which returns `nullptr` on failure instead of throwing"
-      }
-    ],
-    "edge_cases": [
-      "JSON numbers beyond `double` precision may lose precision. Use `j.get<long double>()` if needed.",
-      "Comments are not supported in standard JSON. Use a preprocessor if needed."
-    ]
-  },
-  "safety": {
-    "red_lines": [
-      "Do NOT use `json::accept()` alone for security-critical validation — it only checks syntax, not semantics.",
-      "Do NOT use `dump(-1)` without limiting depth — may cause stack overflow on deeply nested objects."
-    ],
-    "deprecated_apis": [],
-    "version_breaking_changes": []
-  },
-  "dependencies": {
-    "required": ["C++11 or later"],
-    "optional": [],
-    "platform_specific": []
-  },
-  "maintainers": ["nlohmann"],
-  "updated": "2026-04-25T00:00:00Z"
-}
+- Snapshot URL: `https://github.com/LibSkills/registry/releases/latest/download/registry.zip`
+- The CLI updates the index via `libskills update`
+
+## 6. CLI Protocol
+
+### 6.1 Commands
+
+| Command | Description | MVP |
+|---------|-------------|-----|
+| `search <keyword>` | Fuzzy search index by name, tags, summary | ✅ |
+| `get <path>[@version]` | Download skill to local cache | ✅ |
+| `info <path>` | Show skill metadata | ✅ |
+| `update` | Refresh registry index | ✅ |
+| `cache` | Manage local cache | ✅ |
+| `list` | List locally cached skills | ✅ |
+| `doctor <path>` | Validate local skill | ❌ |
+| `find <intent>` | Semantic/vector search | ❌ |
+| `serve` | Start MCP/HTTP API | ❌ |
+
+### 6.2 Local Cache Path
+
+| Platform | Path |
+|----------|------|
+| Linux/macOS | `~/.libskills/` |
+| Windows | `%APPDATA%/libskills/` |
+
+### 6.3 AI Reading Protocol
+
+When an AI agent consumes a skill, it MUST read files in this exact order:
+
+1. `skill.json` — understand metadata, version, trust score
+2. `overview.md` — understand what the library is
+3. `api.md` — learn core API patterns
+4. `pitfalls.md` — learn what NOT to do
+5. `threading.md` — understand concurrency
+6. `lifecycle.md` — understand init/shutdown
+7. `memory.md` — understand resource management
+8. `safety.md` — learn red lines
+9. `performance.md` — understand characteristics
+10. `examples/` — see working code
+
+This order ensures that by the time the agent starts generating code, it has already learned what to avoid.
+
+## 7. Semantic Search (Future)
+
+### 7.1 Embedding Index
+
+Each skill's `skill.json` includes tag summaries that can be embedded:
+
+```
+libskills find "high performance async logging"
+→ cpp/gabime/spdlog (score: 0.92)
+→ cpp/odyg/quill    (score: 0.85)
+→ cpp/ms-gys/sinks  (score: 0.61)
 ```
 
-## 6. Validation Rules
+### 7.2 Local Embedding Cache
 
-- `skill.version` must follow semantic versioning (`MAJOR.MINOR.PATCH`).
-- `library.versions` must use valid semver range syntax.
-- `tier` must be `1` or `2`.
-- `group` must be `main` or `contrib`.
-- `updated` must be a valid ISO 8601 timestamp.
-- All required fields must be present and non-empty.
-- `safety.red_lines` must contain at least one entry.
+```
+~/.libskills/embeddings/
+├── index.faiss
+└── id_map.json
+```
 
-## 7. Future Extensions
+The `libskills update` command may optionally download pre-computed embeddings alongside the registry index.
 
-- **Multi-language libraries**: A single skill may include multiple language sections via an optional `bindings` field.
-- **Macros**: Macro-heavy C/C++ libraries may include a `macros` section.
-- **Testing**: Testing patterns and test doubles may be added as a `testing` section.
+## 8. MCP / HTTP API (Future)
+
+```bash
+libskills serve --port 8701
+```
+
+### Endpoints
+
+```
+GET  /v1/skills                           # List all skills
+GET  /v1/skills/{language}/{author}/{name} # Get full skill
+GET  /v1/skills/.../{section}             # Get specific section (e.g., pitfalls)
+GET  /v1/search?q={keyword}               # Search
+GET  /v1/find?q={intent}                  # Semantic search
+POST /v1/skills                           # Submit a skill (Tier 2)
+GET  /health                              # Health check
+```
+
+## 9. Validation Rules
+
+- Each markdown file must be 500–1500 tokens
+- `pitfalls.md` is **required** (not optional)
+- `safety.md` must contain at least 2 red-line entries
+- `examples/` must contain at least 1 runnable example
+- `trust_score` must be an integer 0–100
+- `skill_version` must follow semver
+- File names must be lowercase with `.md` extension

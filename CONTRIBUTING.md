@@ -1,6 +1,6 @@
 # Contributing to LibSkills
 
-Thank you for considering contributing to LibSkills! This document outlines the process for submitting skills, reporting issues, and improving the project.
+Thank you for contributing to the Library Knowledge Layer.
 
 ---
 
@@ -9,9 +9,11 @@ Thank you for considering contributing to LibSkills! This document outlines the 
 - [Code of Conduct](#code-of-conduct)
 - [How to Submit a Skill](#how-to-submit-a-skill)
 - [Skill Requirements](#skill-requirements)
-- [Where Does My Skill Go?](#where-does-my-skill-go)
+- [Tier 1 vs Tier 2](#tier-1-vs-tier-2)
+- [Main vs Contrib](#main-vs-contrib)
+- [File Naming](#file-naming)
+- [Writing Guidelines](#writing-guidelines)
 - [Pull Request Process](#pull-request-process)
-- [Style Guide](#style-guide)
 - [Getting Help](#getting-help)
 
 ---
@@ -22,72 +24,101 @@ We follow the [Contributor Covenant](https://www.contributor-covenant.org/) Code
 
 ## How to Submit a Skill
 
-1. **Read [SPEC.md](SPEC.md)** thoroughly — your skill file must conform to the skill format specification.
-2. **Fork this repository** (or the `registry` subdirectory if we split later).
-3. **Create your skill file** at the correct path:
+1. Read [SPEC.md](SPEC.md) thoroughly.
+2. Fork this repository.
+3. Create your skill directory:
 
    ```
-   registry/{group}/{language}/{author}/{name}.json
+   registry/{language}/{author}/{name}/
+   ├── skill.json
+   ├── tier1/  (or tier2/)
+   │   ├── overview.md
+   │   ├── api.md
+   │   ├── pitfalls.md          ← REQUIRED
+   │   ├── threading.md
+   │   ├── lifecycle.md
+   │   ├── memory.md
+   │   ├── safety.md            ← REQUIRED
+   │   ├── performance.md
+   │   └── examples/
+   │       └── basic.{cpp,rs,py,go,js}
    ```
 
-   Example: `registry/main/cpp/nlohmann/json.json`
-
-4. **Validate your skill** by running the CLI validator (when available) or manually checking against SPEC.md.
-5. **Update `index.json`** to include your new skill entry.
-6. **Open a pull request**.
+4. Update `index.json` with your entry.
+5. Open a pull request.
 
 ## Skill Requirements
 
-Every skill submission must include:
+### Required for ALL submissions
 
-- A complete skill file in the [format specified in SPEC.md](SPEC.md).
-- A commitment to keep the skill up-to-date as the library evolves (LibSkills will flag outdated skills).
-- For Tier 1 submissions: proof that the library is the de-facto standard in its category.
+- `skill.json` with complete metadata
+- `overview.md` — brief description
+- `pitfalls.md` — what NOT to do (at least 3 entries)
+- `safety.md` — red lines (at least 2 entries)
+- At least one example in `examples/`
+- All files between 500–1500 tokens
 
-### What makes a good skill
+### Strongly encouraged
 
-A well-written skill answers these questions for an AI agent:
+- `api.md` — core API patterns
+- `threading.md` — concurrency constraints
+- `lifecycle.md` — init/shutdown
+- `memory.md` — resource management
+- `performance.md` — perf characteristics
 
-1. **What is the minimal working example?**
-2. **What are the common pitfalls?**
-3. **What are the performance characteristics?**
-4. **What are the thread-safety guarantees?**
-5. **What are the known crash/leak patterns?**
-6. **What are the error handling patterns?**
-7. **What are the configuration best practices?**
-8. **What are the API deprecations to watch out for?**
+## Tier 1 vs Tier 2
 
-## Where Does My Skill Go?
+| Aspect | Tier 1 | Tier 2 |
+|--------|--------|--------|
+| Who | LibSkills maintainers | Anyone |
+| Review | Full accuracy audit | Format + safety check |
+| Trust | 90–100 | 50–89 |
+| Update cadence | Within 60 days of release | Best effort |
+| READ order | AI reads first | AI falls back if no Tier 1 |
 
-|                      | main                         | contrib                            |
-|----------------------|------------------------------|------------------------------------|
-| **Tier 1** (official) | De-facto standard libraries  | Accepted by maintainers on merit   |
-| **Tier 2** (community)| Popular libs, community-sourced | Any library, any author         |
+Submit your skill to `tier2/` initially. If it receives community recognition, it can be upgraded to `tier1/` via pull request review.
 
-**Tier 1 / main** — for libraries that are the undeniable standard (e.g., `fmtlib/fmt`, `nlohmann/json`, `spdlog`). These are reviewed and maintained by the LibSkills team.
+## Main vs Contrib
 
-**Tier 2 / main** — for standard libraries where the skill is community-contributed. Merged after CI validation.
+**Main**: Libraries that are the de-facto standard in their category (spdlog, tokio, serde, requests, fmt, nlohmann/json).
 
-**Tier 2 / contrib** — for any library. Open to everyone. Merged after CI validation.
+**Contrib**: Smaller, niche, or newer libraries. No barriers to entry — any library qualifies.
+
+## File Naming
+
+- All directory and file names MUST be **lowercase**
+- Use **kebab-case** for multi-word names
+- File extensions: `.json`, `.md`
+- Example file extensions: `.cpp`, `.rs`, `.py`, `.go`, `.js`
+
+## Writing Guidelines
+
+### DO
+
+- Write for an **AI agent**, not a human developer
+- Be precise and unambiguous
+- Include code snippets that actually compile
+- Focus on the 20% of APIs used 80% of the time
+- Highlight what CAN go wrong more than what can go right
+
+### DO NOT
+
+- Copy full API reference documentation
+- Mirror README content
+- Include general programming tutorials
+- Use vague language ("may", "might", "sometimes")
+- Exceed 1500 tokens per file
 
 ## Pull Request Process
 
-1. Ensure your skill file passes the JSON schema validation.
-2. Ensure your entry in `index.json` is correct (path, tier, group, versions).
-3. Your PR will be reviewed within 3-5 business days.
-4. Tier 1 PRs require 2 approvals. Tier 2 PRs require 1 approval.
-5. Once merged, the index is rebuilt automatically via GitHub Actions.
-
-## Style Guide
-
-- All skill files must be in **English**.
-- Use **JSON** format (`.json` extension).
-- Follow the schema defined in `SPEC.md`.
-- Use consistent field ordering as shown in the schema.
-- Keep descriptions concise but informative.
+1. Ensure your skill passes schema validation.
+2. Ensure all required files exist and are non-empty.
+3. Ensure your `index.json` entry is correct.
+4. Tier 2 PRs: reviewed within 3–5 business days.
+5. Tier 1 PRs: require 2 maintainer approvals.
 
 ## Getting Help
 
 - Open a [GitHub Discussion](https://github.com/LibSkills/LibSkills/discussions)
-- Join our community (link TBD)
 - Check [SPEC.md](SPEC.md) for format specifics
+- Join the community (link TBD)
