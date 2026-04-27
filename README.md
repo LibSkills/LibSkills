@@ -6,95 +6,143 @@
 
 **Behavioral Knowledge Layer for Open-Source Libraries.**
 
-Reduce AI hallucinations. Eliminate token waste. Ship best practices out of the box.
+AI coding assistants hallucinate library APIs, misuse thread safety, ignore lifecycle constraints. LibSkills fixes this: a `.libskills/` directory in any repo tells AI agents *where the library breaks* before they generate code.
 
-LibSkills is a **standard** — a universal way for any GitHub repository to ship operational knowledge that AI agents, IDEs, and CI systems can consume to use the library safely.
+---
 
-It answers one question: *"What must an AI agent know to use this library safely?"*
+## Who Are You?
+
+### 📦 I'm a Library Author
+
+Add one directory to your repo. AI tools will read it before generating code that uses your library.
+
+```bash
+# Install the CLI
+cargo install libskills
+
+# Scaffold your skill
+cd your-library/
+libskills init -n yourlib -r you/yourlib -l python -t "api,client"
+
+# Fill in the pitfalls and safety sections, then validate
+libskills lint --fix .libskills/
+libskills validate .libskills/
+
+# Commit. Done.
+git add .libskills/ && git commit -m "Add LibSkills skill"
+```
+
+**That's it.** No registration. No PR. No approval. Add the `libskills` GitHub topic to your repo and the aggregation registry auto-discovers it.
+
+### 🤖 I Use AI to Write Code
+
+```bash
+# Install
+cargo install libskills
+
+# Get the registry
+libskills update
+
+# Find what you need
+libskills find "fast C++ logger with async support"
+libskills search http
+
+# Download the skill — AI reads it before generating
+libskills get cpp/gabime/spdlog
+```
+
+### 🖥️ I Use an AI IDE (Claude, Cursor, etc.)
+
+Configure the MCP server. Your AI automatically queries LibSkills before generating library code:
+
+```json
+{
+  "mcpServers": {
+    "libskills": {
+      "command": "libskills-mcp"
+    }
+  }
+}
+```
+
+Or start the HTTP API:
+
+```bash
+libskills serve --port 8701
+curl "http://localhost:8701/v1/find?q=async+runtime"
+```
+
+---
+
+## The Problem LibSkills Solves
+
+```
+Without LibSkills:
+  AI: "I'll use spdlog for logging"
+  → Uses std::endl (flush every write)
+  → Shares non-thread-safe sinks across threads
+  → Calls shutdown() in a static destructor
+  → 3 bugs, 2 crashes, 15 minutes debugging
+
+With LibSkills:
+  AI reads .libskills/pitfalls.md first
+  → Uses \n instead of std::endl
+  → Uses _mt sinks in multi-threaded code
+  → Calls shutdown() in main()
+  → Works on first try
+```
 
 ---
 
 ## The Standard
 
-Every library repository can place a `.libskills/` directory at its root, containing structured knowledge files following the [LibSkills Specification](https://github.com/LibSkills/libskills-docs).
+Every repo can self-host a `.libskills/` directory. No central server required.
 
 ```
 your-library/
 ├── .libskills/
-│   ├── skill.json          # Metadata
-│   ├── overview.md          # What the library is
-│   ├── pitfalls.md          # What NOT to do
-│   ├── safety.md            # Red lines
-│   ├── lifecycle.md         # Init/shutdown
-│   ├── threading.md         # Concurrency
-│   ├── best-practices.md    # Recommended patterns
-│   ├── performance.md       # Perf characteristics
-│   └── examples/
+│   ├── skill.json          # Metadata (language, tier, trust, tags)
+│   ├── overview.md          # [P0] What it is, when to use it
+│   ├── pitfalls.md          # [P0] What NOT to do (≥3 entries)
+│   ├── safety.md            # [P0] Red lines — NEVER do these
+│   ├── lifecycle.md         # [P1] Init / shutdown ordering
+│   ├── threading.md         # [P1] Thread safety guarantees
+│   ├── best-practices.md    # [P1] Recommended patterns
+│   ├── performance.md       # [P2] Throughput / latency / memory
+│   └── examples/            # [P3] Working code
 └── src/
 ```
 
----
-
-## Repositories
-
-| Repository | Role |
-|------------|------|
-| [libskills-docs](https://github.com/LibSkills/libskills-docs) | Canonical specification, philosophy, roadmap, governance |
-| [libskills-schema](https://github.com/LibSkills/libskills-schema) | JSON Schema definitions for `skill.json` and `index.json` |
-| [libskills-registry](https://github.com/LibSkills/libskills-registry) | Aggregated index of skills from repos across GitHub |
-| [libskills-cli](https://github.com/LibSkills/libskills-cli) | Rust CLI — search, get, init, validate, lint |
-| [libskills-protocol](https://github.com/LibSkills/libskills-protocol) | MCP and HTTP protocol definitions (future) |
+[Full Specification →](https://github.com/LibSkills/libskills-docs/blob/main/SPEC.md)
 
 ---
 
-## Protocol First, Platform Second
+## What We Ship
 
-LibSkills is a **protocol**, not a platform. A skill is valid whether it lives in:
-
-- A library's own repository (`.libskills/`) — *self-hosted, decentralized*
-- The official LibSkills registry — *curated aggregation*
-- An enterprise private registry — *internal use*
-
-The CLI acts as a **resolver**: given a library name, it discovers the best available skill.
-
----
-
-## Quickstart
-
-```bash
-# Place a .libskills/ directory in your library's repo
-# AI agents discover it automatically
-```
-
-Or use the CLI:
-
-```bash
-# Install CLI
-cargo install libskills
-
-# Update registry index
-libskills update
-
-# Search for a skill
-libskills search cpp logging
-
-# Download a skill
-libskills get cpp/gabime/spdlog
-```
+| Layer | What | Where |
+|-------|------|-------|
+| **Standard** | `.libskills/` convention, JSON schema v1, reading protocol | [libskills-docs](https://github.com/LibSkills/libskills-docs) |
+| **Schema** | `skill.json` and `index.json` formal definitions | [libskills-schema](https://github.com/LibSkills/libskills-schema) |
+| **Skills** | 6 Tier 1 skills: spdlog, fmt, serde, tokio, requests, fastapi | [libskills-registry](https://github.com/LibSkills/libskills-registry) |
+| **CLI** | 11 commands: init, validate, lint, update, search, find, get, info, list, cache, serve | [libskills-cli](https://github.com/LibSkills/libskills-cli) |
+| **HTTP API** | 6 REST endpoints for AI tool integration | `libskills serve` |
+| **MCP Server** | 4 tools for Claude/Cursor native integration | [libskills-protocol](https://github.com/LibSkills/libskills-protocol) |
+| **Docs** | Specification, philosophy, quickstart, authoring guide, API reference | [libskills-docs](https://github.com/LibSkills/libskills-docs) |
 
 ---
 
-## Governance
+## Protocol First
 
-| | Main | Contrib |
-|--|------|---------|
-| **Tier 1** | Official, curated | Official, accepted on merit |
-| **Tier 2** | Community-submitted | Community-submitted, any repo |
+LibSkills is a **standard**, not a platform. A skill is valid whether it lives in:
 
-See [libskills-docs/GOVERNANCE.md](https://github.com/LibSkills/libskills-docs/blob/main/GOVERNANCE.md) for the full governance rules.
+- A library's own repo (`.libskills/`) — *primary, decentralized*
+- The LibSkills aggregation registry — *discovery convenience*
+- An enterprise private registry — *internal adoption*
+
+Like `.editorconfig` or `package.json`, the convention is the product.
 
 ---
 
 ## License
 
-[Apache 2.0](LICENSE) — LibSkills by [LibSkills Org](https://github.com/LibSkills)
+[Apache 2.0](LICENSE) — [LibSkills Org](https://github.com/LibSkills)
