@@ -17,8 +17,8 @@ AI coding assistants hallucinate library APIs, misuse thread safety, ignore life
 Add one directory to your repo. AI tools will read it before generating code that uses your library.
 
 ```bash
-# Install the CLI
-cargo install libskills
+# Install (one line)
+curl -fsSL https://raw.githubusercontent.com/LibSkills/LibSkills/main/install.sh | bash
 
 # Scaffold your skill
 cd your-library/
@@ -37,17 +37,13 @@ git add .libskills/ && git commit -m "Add LibSkills skill"
 ### 🤖 I Use AI to Write Code
 
 ```bash
-# Install
-cargo install libskills
+# One line install
+curl -fsSL https://raw.githubusercontent.com/LibSkills/LibSkills/main/install.sh | bash
 
-# Get the registry
+# Get started
 libskills update
-
-# Find what you need
 libskills find "fast C++ logger with async support"
 libskills search http
-
-# Download the skill — AI reads it before generating
 libskills get cpp/gabime/spdlog
 ```
 
