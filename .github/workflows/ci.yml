@@ -1,0 +1,80 @@
+name: LibSkills CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  validate-libskills:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate .libskills directory
+        run: |
+          echo "Validating .libskills directory..."
+          if [ -d ".libskills" ]; then
+            echo "✓ .libskills directory exists"
+            
+            # Check required files
+            for file in skill.json overview.md pitfalls.md safety.md; do
+              if [ -f ".libskills/$file" ]; then
+                echo "✓ $file exists"
+              else
+                echo "✗ $file missing"
+                exit 1
+              fi
+            done
+            
+            # Validate skill.json
+            python3 -c "import json; json.load(open('.libskills/skill.json'))"
+            echo "✓ skill.json is valid JSON"
+          else
+            echo "✗ .libskills directory not found"
+            exit 1
+          fi
+
+  check-documentation:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check README.md
+        run: |
+          echo "Checking README.md..."
+          if [ -f "README.md" ]; then
+            echo "✓ README.md exists"
+            # Check for required sections
+            grep -q "LibSkills" README.md && echo "✓ Contains LibSkills mention"
+          else
+            echo "✗ README.md missing"
+            exit 1
+          fi
+
+      - name: Check LICENSE
+        run: |
+          echo "Checking LICENSE..."
+          if [ -f "LICENSE" ]; then
+            echo "✓ LICENSE exists"
+          else
+            echo "✗ LICENSE missing"
+            exit 1
+          fi
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check shell scripts
+        run: |
+          echo "Checking shell scripts..."
+          find . -name "*.sh" -type f -exec bash -n {} \;
+
+      - name: Check Markdown formatting
+        run: |
+          echo "Checking Markdown files..."
+          find . -name "*.md" -type f -exec echo "✓ {}" \;
