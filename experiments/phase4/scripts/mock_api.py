@@ -51,7 +51,8 @@ class MockClient:
         language = "python"
         if "cpp" in prompt.lower() or "c++" in prompt.lower():
             language = "cpp"
-        elif "rust" in prompt.lower():
+        elif "rust" in prompt.lower() and "requests" not in prompt.lower():
+            # Avoid matching "requests" when looking for "rust"
             language = "rust"
         
         # Generate mock code based on language
