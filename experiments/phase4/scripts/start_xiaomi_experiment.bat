@@ -32,10 +32,25 @@ if not exist "..\tasks\experiment_tasks.json" (
     exit /b 1
 )
 
-echo [1/4] Testing Xiaomi API connection...
-python test_xiaomi.py
+echo [1/4] Testing API connection...
+echo.
+echo Choose API backend:
+echo   1. Xiaomi MiMo-V2.5 (requires API key)
+echo   2. Mock API (for testing, no API key needed)
+echo.
+set /p choice="Enter choice (1 or 2): "
+
+if "%choice%"=="2" (
+    echo Using Mock API for testing...
+    python test_xiaomi.py --backend mock
+) else (
+    echo Testing Xiaomi API...
+    python test_xiaomi.py
+)
+
 if %errorlevel% neq 0 (
-    echo [ERROR] API test failed. Please check your API key and network.
+    echo [ERROR] API test failed.
+    echo You can use Mock API for testing: choose option 2
     pause
     exit /b 1
 )

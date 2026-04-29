@@ -15,11 +15,13 @@ from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional
 
-# Import our Xiaomi API client
+# Import API clients
 try:
     from xiaomi_api import XiaomiClient, load_config_from_env, create_system_prompt
-except ImportError:
-    print("Error: xiaomi_api.py not found. Make sure it's in the scripts directory.")
+    from mock_api import MockClient, MockConfig, create_mock_client
+except ImportError as e:
+    print(f"Error: Required module not found: {e}")
+    print("Make sure all script files are in the scripts directory.")
     exit(1)
 
 # ANSI colors for terminal output
@@ -50,17 +52,17 @@ def print_section(text: str):
 
 def print_success(text: str):
     """Print success message."""
-    print(f"{Colors.OKGREEN}✓ {text}{Colors.ENDC}")
+    print(f"{Colors.OKGREEN}[OK] {text}{Colors.ENDC}")
 
 
 def print_warning(text: str):
     """Print warning message."""
-    print(f"{Colors.WARNING}⚠ {text}{Colors.ENDC}")
+    print(f"{Colors.WARNING}[WARN] {text}{Colors.ENDC}")
 
 
 def print_error(text: str):
     """Print error message."""
-    print(f"{Colors.FAIL}✗ {text}{Colors.ENDC}")
+    print(f"{Colors.FAIL}[ERROR] {text}{Colors.ENDC}")
 
 
 class ExperimentTask:
@@ -135,22 +137,31 @@ class ExperimentResult:
 
 
 class XiaomiExperimentRunner:
-    """Experiment runner using Xiaomi MiMo-V2.5."""
+    """Experiment runner using Xiaomi MiMo-V2.5 or Mock API."""
     
-    def __init__(self, data_dir: Path, skills_dir: Path):
+    def __init__(self, data_dir: Path, skills_dir: Path, backend: str = "xiaomi"):
         self.data_dir = data_dir
         self.skills_dir = skills_dir
+        self.backend = backend
         self.tasks: List[ExperimentTask] = []
         self.results: List[ExperimentResult] = []
         
-        # Initialize Xiaomi client
-        try:
-            self.config = load_config_from_env()
-            self.client = XiaomiClient(self.config)
-            print_success(f"Xiaomi API configured: {self.config.model}")
-        except Exception as e:
-            print_error(f"Failed to initialize Xiaomi API: {e}")
-            raise
+        # Initialize API client based on backend
+        if backend == "mock":
+            self.client = create_mock_client()
+            self.config = self.client.config
+            print_success(f"Mock API configured: {self.config.model}")
+        else:
+            try:
+                self.config = load_config_from_env(backend)
+                self.client = XiaomiClient(self.config)
+                print_success(f"{backend.upper()} API configured: {self.config.model}")
+            except Exception as e:
+                print_error(f"Failed to initialize {backend.upper()} API: {e}")
+                print_warning("Falling back to Mock API for testing...")
+                self.backend = "mock"
+                self.client = create_mock_client()
+                self.config = self.client.config
         
         # Create results directory
         self.results_dir = data_dir / 'results'
@@ -446,16 +457,20 @@ def main():
     parser.add_argument('--group', choices=['control', 'treatment', 'both'], 
                         default='both', help='Which group to run')
     parser.add_argument('--max-tasks', type=int, default=None, help='Maximum number of tasks to run')
+    parser.add_argument('--backend', choices=['xiaomi', 'openai', 'anthropic', 'mock'], 
+                        default='xiaomi', help='API backend to use')
     
     args = parser.parse_args()
     
-    print_header("Phase 4: Value Validation Experiment (Xiaomi MiMo-V2.5)")
+    backend_name = args.backend.upper() if args.backend != "xiaomi" else "Xiaomi MiMo-V2.5"
+    print_header(f"Phase 4: Value Validation Experiment ({backend_name})")
     
     # Initialize runner
     try:
         runner = XiaomiExperimentRunner(
             data_dir=Path(args.data),
-            skills_dir=Path(args.skills)
+            skills_dir=Path(args.skills),
+            backend=args.backend
         )
     except Exception as e:
         print_error(f"Failed to initialize experiment runner: {e}")

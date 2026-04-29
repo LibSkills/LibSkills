@@ -31,10 +31,25 @@ if (-not (Test-Path "..\tasks\experiment_tasks.json")) {
     exit 1
 }
 
-Write-Host "[1/4] Testing Xiaomi API connection..." -ForegroundColor Yellow
-python test_xiaomi.py
+Write-Host "[1/4] Testing API connection..." -ForegroundColor Yellow
+Write-Host ""
+Write-Host "Choose API backend:" -ForegroundColor White
+Write-Host "  1. Xiaomi MiMo-V2.5 (requires API key)" -ForegroundColor Gray
+Write-Host "  2. Mock API (for testing, no API key needed)" -ForegroundColor Gray
+Write-Host ""
+$choice = Read-Host "Enter choice (1 or 2)"
+
+if ($choice -eq "2") {
+    Write-Host "Using Mock API for testing..." -ForegroundColor Cyan
+    python test_xiaomi.py --backend mock
+} else {
+    Write-Host "Testing Xiaomi API..." -ForegroundColor Cyan
+    python test_xiaomi.py
+}
+
 if ($LASTEXITCODE -ne 0) {
-    Write-Host "[ERROR] API test failed. Please check your API key and network." -ForegroundColor Red
+    Write-Host "[ERROR] API test failed." -ForegroundColor Red
+    Write-Host "You can use Mock API for testing: choose option 2" -ForegroundColor Yellow
     Read-Host "Press Enter to exit"
     exit 1
 }

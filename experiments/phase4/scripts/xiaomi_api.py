@@ -11,6 +11,14 @@ import requests
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
+
+# Import API configuration
+try:
+    from api_config import get_api_config, load_env_file, APIConfig
+except ImportError:
+    # Fallback if api_config is not available
+    APIConfig = None
 
 
 @dataclass
@@ -70,42 +78,61 @@ class XiaomiClient:
         
         start_time = datetime.now()
         
-        try:
-            response = self.session.post(
-                f"{self.config.base_url}/chat/completions",
-                json=payload,
-                timeout=self.config.timeout
-            )
-            response.raise_for_status()
-            
-            result = response.json()
-            end_time = datetime.now()
-            
-            # Extract the response
-            if "choices" in result and len(result["choices"]) > 0:
-                content = result["choices"][0]["message"]["content"]
+        # Try multiple API endpoints
+        endpoints = [
+            f"{self.config.base_url}/chat/completions",
+            f"{self.config.base_url}/completions",
+            f"{self.config.base_url}/generate"
+        ]
+        
+        for endpoint in endpoints:
+            try:
+                response = self.session.post(
+                    endpoint,
+                    json=payload,
+                    timeout=self.config.timeout,
+                    verify=True  # SSL verification
+                )
                 
-                return {
-                    "success": True,
-                    "content": content,
-                    "model": result.get("model", self.config.model),
-                    "usage": result.get("usage", {}),
-                    "response_time": (end_time - start_time).total_seconds(),
-                    "raw_response": result
-                }
-            else:
-                return {
-                    "success": False,
-                    "error": "No response content",
-                    "raw_response": result
-                }
+                if response.status_code == 200:
+                    result = response.json()
+                    end_time = datetime.now()
+                    
+                    # Extract the response (handle different response formats)
+                    if "choices" in result and len(result["choices"]) > 0:
+                        content = result["choices"][0].get("message", {}).get("content", "")
+                        if not content:
+                            content = result["choices"][0].get("text", "")
+                        
+                        return {
+                            "success": True,
+                            "content": content,
+                            "model": result.get("model", self.config.model),
+                            "usage": result.get("usage", {}),
+                            "response_time": (end_time - start_time).total_seconds(),
+                            "raw_response": result
+                        }
+                    elif "text" in result:
+                        return {
+                            "success": True,
+                            "content": result["text"],
+                            "model": result.get("model", self.config.model),
+                            "usage": result.get("usage", {}),
+                            "response_time": (end_time - start_time).total_seconds(),
+                            "raw_response": result
+                        }
+                    else:
+                        continue  # Try next endpoint
                 
-        except requests.exceptions.RequestException as e:
-            return {
-                "success": False,
-                "error": str(e),
-                "response_time": (datetime.now() - start_time).total_seconds()
-            }
+            except requests.exceptions.RequestException as e:
+                continue  # Try next endpoint
+        
+        # If all endpoints failed
+        return {
+            "success": False,
+            "error": f"All API endpoints failed. Last error: {str(e) if 'e' in locals() else 'Unknown'}",
+            "response_time": (datetime.now() - start_time).total_seconds()
+        }
     
     def extract_code(self, response: str, language: str) -> str:
         """
@@ -173,20 +200,68 @@ class XiaomiClient:
         }
 
 
-def load_config_from_env() -> XiaomiConfig:
+def load_config_from_env(backend: str = "xiaomi") -> XiaomiConfig:
     """
-    Load configuration from environment variables.
+    Load configuration from environment variables and .env file.
     
+    Args:
+        backend: API backend name (xiaomi, openai, anthropic, mock)
+        
     Returns:
         XiaomiConfig object
     """
-    api_key = os.getenv("XIAOMI_API_KEY")
+    # Try to use api_config module if available
+    if APIConfig is not None:
+        try:
+            config = get_api_config(backend)
+            return XiaomiConfig(
+                api_key=config.api_key,
+                base_url=config.base_url,
+                model=config.model,
+                max_tokens=config.max_tokens,
+                temperature=config.temperature,
+                timeout=config.timeout
+            )
+        except Exception:
+            pass  # Fall back to manual loading
+    
+    # Manual loading as fallback
+    # Try to load from .env file first
+    env_file = Path(__file__).parent.parent / '.env'
+    if env_file.exists():
+        with open(env_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#') and '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip()
+                    value = value.strip()
+                    if key and value:
+                        os.environ[key] = value
+    
+    # Get configuration based on backend
+    env_prefix = backend.upper()
+    api_key = os.getenv(f"{env_prefix}_API_KEY")
     
     if not api_key:
-        raise ValueError("XIAOMI_API_KEY environment variable is required")
+        raise ValueError(f"{env_prefix}_API_KEY environment variable is required")
     
-    base_url = os.getenv("XIAOMI_BASE_URL", "https://api.xiaoai.mi.com/v1")
-    model = os.getenv("XIAOMI_MODEL", "mimo-v2.5")
+    base_urls = {
+        "xiaomi": "https://api.xiaoai.mi.com/v1",
+        "openai": "https://api.openai.com/v1",
+        "anthropic": "https://api.anthropic.com",
+        "mock": "http://localhost:8000"
+    }
+    
+    models = {
+        "xiaomi": "mimo-v2.5",
+        "openai": "gpt-4",
+        "anthropic": "claude-3-opus-20240229",
+        "mock": "mock-model"
+    }
+    
+    base_url = os.getenv(f"{env_prefix}_BASE_URL", base_urls.get(backend, base_urls["xiaomi"]))
+    model = os.getenv(f"{env_prefix}_MODEL", models.get(backend, models["xiaomi"]))
     
     return XiaomiConfig(
         api_key=api_key,
@@ -243,17 +318,17 @@ def test_xiaomi_api():
         result = client.test_connection()
         
         if result["connected"]:
-            print(f"✓ Connection successful! Response time: {result['response_time']:.2f}s")
+            print(f"[OK] Connection successful! Response time: {result['response_time']:.2f}s")
             return True
         else:
-            print(f"✗ Connection failed: {result.get('error', 'Unknown error')}")
+            print(f"[ERROR] Connection failed: {result.get('error', 'Unknown error')}")
             return False
             
     except ValueError as e:
-        print(f"✗ Configuration error: {e}")
+        print(f"[ERROR] Configuration error: {e}")
         return False
     except Exception as e:
-        print(f"✗ Unexpected error: {e}")
+        print(f"[ERROR] Unexpected error: {e}")
         return False
 
 

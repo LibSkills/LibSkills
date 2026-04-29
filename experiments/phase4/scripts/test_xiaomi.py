@@ -1,32 +1,37 @@
 #!/usr/bin/env python3
 """
-Test script for Xiaomi MiMo-V2.5 API integration.
+Test script for AI API integration (Xiaomi MiMo-V2.5 or Mock).
 """
 
 import sys
 import os
+import argparse
 
 # Add the scripts directory to path
 sys.path.insert(0, os.path.dirname(__file__))
 
 from xiaomi_api import test_xiaomi_api, XiaomiClient, load_config_from_env, create_system_prompt
+from mock_api import create_mock_client
 
-def test_basic_generation():
-    """Test basic code generation with MiMo-V2.5."""
+def test_basic_generation(backend: str = "xiaomi"):
+    """Test basic code generation with specified backend."""
     print("\n" + "=" * 60)
-    print("Testing Basic Code Generation")
+    print(f"Testing Basic Code Generation ({backend.upper()})")
     print("=" * 60)
     
     try:
-        config = load_config_from_env()
-        client = XiaomiClient(config)
+        if backend == "mock":
+            client = create_mock_client()
+        else:
+            config = load_config_from_env(backend)
+            client = XiaomiClient(config)
         
         # Simple test prompt
         prompt = "Write a simple Python function that calculates the factorial of a number."
         system_prompt = create_system_prompt("python", with_skill=False)
         
         print(f"Prompt: {prompt[:50]}...")
-        print("Sending request to MiMo-V2.5...")
+        print(f"Sending request to {backend.upper()}...")
         
         result = client.generate_code(prompt, system_prompt)
         
@@ -53,15 +58,18 @@ def test_basic_generation():
         print(f"Error: {e}")
         return False
 
-def test_with_skill():
+def test_with_skill(backend: str = "xiaomi"):
     """Test code generation with skill documentation."""
     print("\n" + "=" * 60)
-    print("Testing with Skill Documentation")
+    print(f"Testing with Skill Documentation ({backend.upper()})")
     print("=" * 60)
     
     try:
-        config = load_config_from_env()
-        client = XiaomiClient(config)
+        if backend == "mock":
+            client = create_mock_client()
+        else:
+            config = load_config_from_env(backend)
+            client = XiaomiClient(config)
         
         # Test prompt with skill context
         prompt = """You are an expert Python developer.
@@ -105,7 +113,7 @@ The code should compile and run without errors.
         system_prompt = create_system_prompt("python", with_skill=True)
         
         print("Testing with skill documentation...")
-        print("Sending request to MiMo-V2.5...")
+        print(f"Sending request to {backend.upper()}...")
         
         result = client.generate_code(prompt, system_prompt)
         
@@ -123,14 +131,14 @@ The code should compile and run without errors.
             # Check if skill guidelines were followed
             print("\nSkill compliance check:")
             if "timeout" in code.lower():
-                print("  ✓ Timeout handling included")
+                print("  [OK] Timeout handling included")
             else:
-                print("  ✗ Timeout handling missing")
+                print("  [MISSING] Timeout handling missing")
             
             if "exception" in code.lower() or "error" in code.lower() or "try:" in code:
-                print("  ✓ Error handling included")
+                print("  [OK] Error handling included")
             else:
-                print("  ✗ Error handling missing")
+                print("  [MISSING] Error handling missing")
             
             return True
         else:
@@ -142,33 +150,48 @@ The code should compile and run without errors.
         return False
 
 def main():
+    parser = argparse.ArgumentParser(description='Test AI API integration')
+    parser.add_argument('--backend', choices=['xiaomi', 'openai', 'anthropic', 'mock'], 
+                        default='xiaomi', help='API backend to test')
+    
+    args = parser.parse_args()
+    
     print("=" * 60)
-    print("Xiaomi MiMo-V2.5 API Test")
+    print(f"AI API Test ({args.backend.upper()})")
     print("=" * 60)
     
     # Test 1: Connection
     print("\n1. Testing API connection...")
-    if not test_xiaomi_api():
-        print("\nConnection test failed. Please check your API key and network.")
-        return 1
+    if args.backend == "mock":
+        from mock_api import create_mock_client
+        client = create_mock_client()
+        result = client.test_connection()
+        if not result.get("connected"):
+            print("\nConnection test failed.")
+            return 1
+        print("[OK] Mock API connection successful")
+    else:
+        if not test_xiaomi_api():
+            print("\nConnection test failed. Please check your API key and network.")
+            return 1
     
     # Test 2: Basic generation
     print("\n2. Testing basic code generation...")
-    if not test_basic_generation():
+    if not test_basic_generation(args.backend):
         print("\nBasic generation test failed.")
         return 1
     
     # Test 3: With skill documentation
     print("\n3. Testing with skill documentation...")
-    if not test_with_skill():
+    if not test_with_skill(args.backend):
         print("\nSkill generation test failed.")
         return 1
     
     print("\n" + "=" * 60)
-    print("All tests passed! ✓")
+    print("All tests passed!")
     print("=" * 60)
     print("\nYou can now run the full experiment:")
-    print("python run_xiaomi_experiment.py --tasks tasks/experiment_tasks.json --trials 1")
+    print(f"python run_xiaomi_experiment.py --tasks tasks/experiment_tasks.json --backend {args.backend} --trials 1")
     
     return 0
 
