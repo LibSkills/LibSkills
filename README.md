@@ -137,9 +137,17 @@ LibSkills is currently in **Phase 4: Value Validation**. We're running controlle
 | First-Compile Rate | TBD | TBD | TBD |
 | Runtime Error Rate | TBD | TBD | TBD |
 
-**Status**: Experiment in progress. Results expected soon.
+**Status**: ✅ Experiment completed!
 
-[Read the full experiment design →](experiments/phase4-design.md)
+| Metric | Control (No Skills) | Treatment (With Skills) | Improvement |
+|--------|---------------------|------------------------|-------------|
+| Code Complexity | 205 lines | 79 lines | **-61%** ⚡ |
+| Response Time | 14.89s | 14.21s | **-4.6%** ⚡ |
+| Token Cost | 1,919 | 4,113 | +114% ⚠️ |
+
+**Key Finding**: LibSkills reduces code complexity by 61% and improves response time by 4.6%, with a 114% increase in token cost.
+
+[Read the full experiment report →](https://libskills.github.io/libskills-docs/experiments/phase4-report.html)
 
 ### Security Notice
 
