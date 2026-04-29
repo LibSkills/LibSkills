@@ -1,0 +1,69 @@
+# Environment variables - NEVER COMMIT
+.env
+.env.*
+!.env.example
+
+# API keys and secrets
+*.key
+*.pem
+*.p12
+*.pfx
+secrets/
+credentials.json
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+*.egg-info/
+dist/
+build/
+*.egg
+
+# Experiment data - may contain sensitive information
+experiments/phase4/data/results/
+experiments/phase4/data/generated/
+experiments/phase4/data/prompts/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.backup
+
+# Test results
+test_results/
+coverage/
+.pytest_cache/
+
+# Local configuration
+config.local.toml
+config.local.yaml
+config.local.json

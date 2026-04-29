@@ -1,0 +1,156 @@
+{
+  "version": "1.0",
+  "description": "Phase 4 Value Validation Experiment Tasks",
+  "tasks": [
+    {
+      "id": "spdlog-1",
+      "library": "spdlog",
+      "language": "cpp",
+      "description": "Create a basic file logger with rotation (1MB max size, 3 files)",
+      "complexity": "low",
+      "expected_files": ["main.cpp"],
+      "test_command": "g++ -std=c++17 main.cpp -I/usr/include -ospdlog_test && ./spdlog_test",
+      "success_criteria": ["Compiles without errors", "Creates log file", "Rotates when size exceeded"]
+    },
+    {
+      "id": "spdlog-2",
+      "library": "spdlog",
+      "language": "cpp",
+      "description": "Set up async logging with thread safety for 4 worker threads",
+      "complexity": "medium",
+      "expected_files": ["main.cpp"],
+      "test_command": "g++ -std=c++17 -pthread main.cpp -I/usr/include -ospdlog_test && ./spdlog_test",
+      "success_criteria": ["Compiles without errors", "Thread-safe logging", "No race conditions"]
+    },
+    {
+      "id": "spdlog-3",
+      "library": "spdlog",
+      "language": "cpp",
+      "description": "Create a logger with custom format pattern including timestamp, level, and message",
+      "complexity": "low",
+      "expected_files": ["main.cpp"],
+      "test_command": "g++ -std=c++17 main.cpp -I/usr/include -ospdlog_test && ./spdlog_test",
+      "success_criteria": ["Custom format applied correctly", "Timestamp in ISO format"]
+    },
+    {
+      "id": "spdlog-4",
+      "library": "spdlog",
+      "language": "cpp",
+      "description": "Configure multiple sinks: console (colored) + file + rotating file",
+      "complexity": "medium",
+      "expected_files": ["main.cpp"],
+      "test_command": "g++ -std=c++17 main.cpp -I/usr/include -ospdlog_test && ./spdlog_test",
+      "success_criteria": ["All three sinks configured", "Different formats per sink", "No crashes"]
+    },
+    {
+      "id": "spdlog-5",
+      "library": "spdlog",
+      "language": "cpp",
+      "description": "Implement runtime log level filtering based on configuration file",
+      "complexity": "medium",
+      "expected_files": ["main.cpp", "config.txt"],
+      "test_command": "g++ -std=c++17 main.cpp -I/usr/include -ospdlog_test && ./spdlog_test config.txt",
+      "success_criteria": ["Loads config file", "Filters log levels correctly", "Runtime changeable"]
+    },
+    {
+      "id": "serde-1",
+      "library": "serde",
+      "language": "rust",
+      "description": "Serialize a struct with nested fields to JSON",
+      "complexity": "low",
+      "expected_files": ["main.rs", "Cargo.toml"],
+      "test_command": "cargo run",
+      "success_criteria": ["Compiles without errors", "Valid JSON output", "Nested fields included"]
+    },
+    {
+      "id": "serde-2",
+      "library": "serde",
+      "language": "rust",
+      "description": "Deserialize JSON with field validation and default values",
+      "complexity": "medium",
+      "expected_files": ["main.rs", "Cargo.toml"],
+      "test_command": "cargo run",
+      "success_criteria": ["Validates required fields", "Applies defaults correctly", "Handles errors gracefully"]
+    },
+    {
+      "id": "serde-3",
+      "library": "serde",
+      "language": "rust",
+      "description": "Implement custom serialization for a struct with special formatting",
+      "complexity": "high",
+      "expected_files": ["main.rs", "Cargo.toml"],
+      "test_command": "cargo run",
+      "success_criteria": ["Custom format applied", "Bidirectional (serialize + deserialize)", "No data loss"]
+    },
+    {
+      "id": "serde-4",
+      "library": "serde",
+      "language": "rust",
+      "description": "Handle deeply nested JSON structures with optional fields",
+      "complexity": "medium",
+      "expected_files": ["main.rs", "Cargo.toml"],
+      "test_command": "cargo run",
+      "success_criteria": ["Handles missing optional fields", "Preserves nested structure", "Type-safe access"]
+    },
+    {
+      "id": "serde-5",
+      "library": "serde",
+      "language": "rust",
+      "description": "Optimize serialization performance for large datasets",
+      "complexity": "high",
+      "expected_files": ["main.rs", "Cargo.toml"],
+      "test_command": "cargo run --release",
+      "success_criteria": ["Benchmarks show improvement", "Memory efficient", "Zero-copy where possible"]
+    },
+    {
+      "id": "requests-1",
+      "library": "requests",
+      "language": "python",
+      "description": "Make a GET request with timeout and error handling",
+      "complexity": "low",
+      "expected_files": ["main.py"],
+      "test_command": "python main.py",
+      "success_criteria": ["Timeout configured", "Handles connection errors", "Returns response data"]
+    },
+    {
+      "id": "requests-2",
+      "library": "requests",
+      "language": "python",
+      "description": "POST JSON data with proper content-type headers",
+      "complexity": "low",
+      "expected_files": ["main.py"],
+      "test_command": "python main.py",
+      "success_criteria": ["Sends JSON correctly", "Content-Type header set", "Handles response"]
+    },
+    {
+      "id": "requests-3",
+      "library": "requests",
+      "language": "python",
+      "description": "Implement session management with cookie persistence",
+      "complexity": "medium",
+      "expected_files": ["main.py"],
+      "test_command": "python main.py",
+      "success_criteria": ["Session maintained", "Cookies persisted", "Connection reuse"]
+    },
+    {
+      "id": "requests-4",
+      "library": "requests",
+      "language": "python",
+      "description": "Handle authentication with Bearer token in headers",
+      "complexity": "medium",
+      "expected_files": ["main.py"],
+      "test_command": "python main.py",
+      "success_criteria": ["Token in Authorization header", "Handles 401/403", "Token refresh ready"]
+    },
+    {
+      "id": "requests-5",
+      "library": "requests",
+      "language": "python",
+      "description": "Implement retry logic with exponential backoff",
+      "complexity": "high",
+      "expected_files": ["main.py"],
+      "test_command": "python main.py",
+      "success_criteria": ["Retries on failure", "Exponential backoff", "Max retries limit", "Handles specific errors"]
+    }
+  ]
+}

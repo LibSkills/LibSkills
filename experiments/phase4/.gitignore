@@ -1,0 +1,23 @@
+# Experiment results and generated data
+data/results/
+data/generated/
+data/prompts/
+*.json
+!tasks/*.json
+
+# Environment variables
+.env
+.env.*
+
+# Python
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+
+# Temporary files
+*.tmp
+*.temp

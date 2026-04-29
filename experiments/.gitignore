@@ -1,0 +1,28 @@
+# Experiment data - may contain sensitive information
+phase4/data/results/
+phase4/data/generated/
+phase4/data/prompts/
+*.json
+!phase4/tasks/*.json
+
+# Environment variables
+.env
+.env.*
+
+# Python virtual environment
+venv/
+.venv/
+__pycache__/
+*.pyc
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+
+# Generated code (may contain API responses)
+generated/
+results/

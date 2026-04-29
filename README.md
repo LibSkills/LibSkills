@@ -127,6 +127,26 @@ your-library/
 
 ---
 
+## Validation Status
+
+LibSkills is currently in **Phase 4: Value Validation**. We're running controlled experiments to prove that skills reduce AI errors.
+
+| Metric | Control (No Skills) | Treatment (With Skills) | Improvement |
+|--------|---------------------|------------------------|-------------|
+| Hallucination Rate | TBD | TBD | TBD |
+| First-Compile Rate | TBD | TBD | TBD |
+| Runtime Error Rate | TBD | TBD | TBD |
+
+**Status**: Experiment in progress. Results expected soon.
+
+[Read the full experiment design →](experiments/phase4-design.md)
+
+### Security Notice
+
+⚠️ **Never commit API keys or `.env` files!** The experiments use API keys for AI services. These are stored in `.env` files which are ignored by `.gitignore`. See [experiments/README.md](experiments/README.md#security-notice) for setup instructions.
+
+---
+
 ## Protocol First
 
 LibSkills is a **standard**, not a platform. A skill is valid whether it lives in:
